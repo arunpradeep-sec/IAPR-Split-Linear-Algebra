@@ -17,6 +17,15 @@ button{padding:10px 20px;font-size:16px}
 <p style="
     text-align:left;
     color:#777;
+    font-size:14px;
+    margin-top:-10px;
+    margin-bottom:25px;
+">
+    Experiment marks + viva, with ZIP export
+</p>
+<p style="
+    text-align:left;
+    color:#777;
     font-size:11.5px;
     font-style:italic;
     margin-top:-10px;
@@ -25,15 +34,71 @@ button{padding:10px 20px;font-size:16px}
     For educational purpose only
 </p>
 <div class="box">
-<b>Experiment Marks File</b><br><input type="file" id="expFile" accept=".xlsx,.xls">
+  <b>Experiment Marks File</b><br><br>
+
+<input type="file"
+       id="expFile"
+       accept=".xlsx,.xls">
+
+<br><br>
+
+ <div style="
+        margin-top:12px;
+        padding:8px;
+        background:#f5f5f5;
+        border-left:4px solid #999;
+        font-size:13px;
+        color:#555;
+        font-style:italic;
+    ">
+        Note: Ensure the Experiment file contains Reg. Number in Column C and
+        Experiment marks in Columns G to P. Remove the last column of the Excel sheet which contains "Last downloaded from this course" before uploading.
+    </div>
 </div>
 
 <div class="box">
-<b>Viva File</b><br><input type="file" id="vivaFile" accept=".xlsx,.xls">
+    <b>Viva File</b>
+
+    <br><br>
+
+    <input type="file"
+           id="vivaFile"
+           accept=".xlsx,.xls">
+
+    <div style="
+        margin-top:12px;
+        padding:8px;
+        background:#f5f5f5;
+        border-left:4px solid #999;
+        font-size:13px;
+        color:#555;
+        font-style:italic;
+    ">
+        Note: Ensure the Viva file contains ID Number in Column C and
+        Viva marks for Experiments 1–9 in Columns G to O.Remove the last column of the Excel sheet which contains "Last downloaded from this course" before uploading.
+    </div>
 </div>
 
 <div class="box">
-<b>Output Template</b><br><input type="file" id="templateFile" accept=".xlsx,.xls">
+    <b>Output Template</b>
+
+    <br><br>
+
+    <input type="file"
+           id="templateFile"
+           accept=".xlsx,.xls">
+
+    <div style="
+        margin-top:12px;
+        padding:8px;
+        background:#f5f5f5;
+        border-left:4px solid #999;
+        font-size:13px;
+        color:#555;
+        font-style:italic;
+    ">
+        Note: Upload any one IAPR template file downloaded from CAMU.
+    </div>
 </div>
 
 <button onclick="generateFiles()">Generate ZIP</button>
@@ -189,5 +254,18 @@ sheet[
  alert("Generated "+experimentCols.length+" files.");
 }
 </script>
+<footer style="
+    margin-top:50px;
+    display:flex;
+    justify-content:center;
+    gap:40px;
+    align-items:center;
+">
+
+    <img src="logo1.jpg" height="70">
+    <img src="logo2.png" height="70">
+    <img src="logo3.jpg" height="70">
+
+</footer>
 </body>
 </html>
