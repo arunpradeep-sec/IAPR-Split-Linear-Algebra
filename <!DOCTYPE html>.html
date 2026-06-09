@@ -1,293 +1,185 @@
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>IAPR File Generator</title>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
 <style>
-body{
-    font-family:Arial,sans-serif;
-    max-width:900px;
-    margin:auto;
-    padding:20px;
-}
-
-.box{
-    border:1px solid #ccc;
-    border-radius:8px;
-    padding:15px;
-    margin-bottom:15px;
-}
-
-button{
-    padding:10px 20px;
-    font-size:16px;
-    cursor:pointer;
-}
-
-h2{
-    text-align:center;
-}
-
-.subtitle{
-    text-align:center;
-    font-size:12px;
-    font-style:italic;
-    color:#666;
-    margin-top:-10px;
-    margin-bottom:25px;
-}
+body{font-family:Arial;max-width:900px;margin:auto;padding:20px}
+.box{border:1px solid #ccc;border-radius:8px;padding:15px;margin-bottom:15px}
+button{padding:10px 20px;font-size:16px}
 </style>
 </head>
-
 <body>
-
 <h2>IAPR File Generator</h2>
-
-<p class="subtitle">
-Generate experiment-wise IAPR upload files automatically
-</p>
+<p><i>Experiment marks + viva processing with ZIP export</i></p>
 
 <div class="box">
-    <b>INPUT.xlsx</b><br><br>
-    <input type="file" id="inputFile" accept=".xlsx,.xls">
+<b>Experiment Marks File</b><br><input type="file" id="expFile" accept=".xlsx,.xls">
 </div>
 
 <div class="box">
-    <b>OUTPUT Template.xlsx</b><br><br>
-    <input type="file" id="templateFile" accept=".xlsx,.xls">
+<b>Viva File</b><br><input type="file" id="vivaFile" accept=".xlsx,.xls">
 </div>
 
-<button onclick="generateFiles()">
-Generate ZIP
-</button>
+<div class="box">
+<b>Output Template</b><br><input type="file" id="templateFile" accept=".xlsx,.xls">
+</div>
+
+<button onclick="generateFiles()">Generate ZIP</button>
 
 <script>
-
-function readFile(file){
-
-    return new Promise((resolve,reject)=>{
-
-        const reader=new FileReader();
-
-        reader.onload=e=>resolve(e.target.result);
-
-        reader.onerror=reject;
-
-        reader.readAsArrayBuffer(file);
-    });
+function cleanId(v){
+ if(v===undefined||v===null) return "";
+ return String(v).replace(".0","").trim();
 }
 
-function cleanId(value){
-
-    if(value===undefined || value===null)
-        return "";
-
-    return String(value)
-        .replace(".0","")
-        .trim();
+function readFile(file){
+ return new Promise((resolve,reject)=>{
+  const r=new FileReader();
+  r.onload=e=>resolve(e.target.result);
+  r.onerror=reject;
+  r.readAsArrayBuffer(file);
+ });
 }
 
 async function generateFiles(){
 
-    const inputFile =
-        document.getElementById("inputFile").files[0];
+ const expFile=document.getElementById("expFile").files[0];
+ const vivaFile=document.getElementById("vivaFile").files[0];
+ const templateFile=document.getElementById("templateFile").files[0];
 
-    const templateFile =
-        document.getElementById("templateFile").files[0];
+ if(!expFile || !vivaFile || !templateFile){
+   alert("Upload all three files");
+   return;
+ }
 
-    if(!inputFile || !templateFile){
+ const expWB=XLSX.read(await readFile(expFile));
+ const vivaWB=XLSX.read(await readFile(vivaFile));
+ const templateBuffer=await readFile(templateFile);
 
-        alert("Please upload both files.");
-        return;
-    }
+ const expRows=XLSX.utils.sheet_to_json(
+   expWB.Sheets[expWB.SheetNames[0]],{header:1}
+ );
 
-    const inputBuffer =
-        await readFile(inputFile);
+ const vivaRows=XLSX.utils.sheet_to_json(
+   vivaWB.Sheets[vivaWB.SheetNames[0]],{header:1}
+ );
 
-    const templateBuffer =
-        await readFile(templateFile);
+ const expMap={};
+ for(let r=1;r<expRows.length;r++){
+   const row=expRows[r];
+   const id=cleanId(row[2]);
+   if(!id) continue;
+   expMap[id]=row;
+ }
 
-    const inputWB =
-        XLSX.read(inputBuffer);
+ const vivaMap={};
+ for(let r=1;r<vivaRows.length;r++){
+   const row=vivaRows[r];
+   const id=cleanId(row[2]);
+   if(!id) continue;
+   vivaMap[id]=row;
+ }
 
-    const templateWB =
-        XLSX.read(templateBuffer);
+ const experimentCols=[];
+ const headers=expRows[0];
 
-    const inputSheet =
-        XLSX.utils.sheet_to_json(
-            inputWB.Sheets[
-                inputWB.SheetNames[0]
-            ],
-            {header:1}
-        );
+ for(let c=6;c<headers.length;c++){
+   if(headers[c]===undefined || String(headers[c]).trim()==="") break;
+   experimentCols.push(c);
+ }
 
-    const zip = new JSZip();
+ const zip=new JSZip();
 
-    const headerRow = inputSheet[0];
+ for(let expIndex=0; expIndex<experimentCols.length; expIndex++){
 
-    const experimentColumns = [];
+   const expCol=experimentCols[expIndex];
 
-    // G onwards = index 6 onwards
-    for(let c=6;c<headerRow.length;c++){
+   const wb=XLSX.read(templateBuffer);
+   const sheet=wb.Sheets[wb.SheetNames[0]];
+   const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
 
-        const header = headerRow[c];
+const headerRow=rows[0];
 
-        if(header===undefined ||
-           header===null ||
-           String(header).trim()==="")
-            break;
-
-        experimentColumns.push(c);
-    }
-
-    if(experimentColumns.length===0){
-
-        alert("No experiment columns found.");
-        return;
-    }
-
-    for(let expIndex=0;
-        expIndex<experimentColumns.length;
-        expIndex++){
-
-        const expCol =
-            experimentColumns[expIndex];
-
-        const workbook =
-            XLSX.read(templateBuffer);
-
-        const sheet =
-            workbook.Sheets[
-                workbook.SheetNames[0]
-            ];
-
-        const rows =
-            XLSX.utils.sheet_to_json(
-                sheet,
-                {header:1}
-            );
-
-        const stuRollCol =
-            rows[0].findIndex(
-                x=>String(x).trim()
-                ==="StuRollNo"
-            );
-
-        const markCol =
-            rows[0].findIndex(
-                x=>String(x).trim()
-                ==="Mark"
-            );
-
-        if(stuRollCol===-1 ||
-           markCol===-1){
-
-            alert(
-              "StuRollNo or Mark column not found."
-            );
-            return;
-        }
-
-        const inputMap = {};
-
-        for(let r=1;
-            r<inputSheet.length;
-            r++){
-
-            const row =
-                inputSheet[r];
-
-            const id =
-                cleanId(row[2]); // Column C
-
-            if(!id) continue;
-
-            inputMap[id] =
-                row[expCol];
-        }
-
-        for(let r=1;
-            r<rows.length;
-            r++){
-
-            const row =
-                rows[r];
-
-            const roll =
-                cleanId(
-                    row[stuRollCol]
-                );
-
-            if(!roll)
-                continue;
-
-            row[markCol] =
-                inputMap[roll] ?? 0;
-        }
-
-        const outputSheet =
-            XLSX.utils.aoa_to_sheet(
-                rows
-            );
-
-        workbook.Sheets[
-            workbook.SheetNames[0]
-        ] = outputSheet;
-
-        const wbout =
-            XLSX.write(
-                workbook,
-                {
-                    type:"array",
-                    bookType:"xlsx"
-                }
-            );
-
-        const fileName =
-            "IAPR_Exp" +
-            String(expIndex+1)
-            .padStart(2,"0")
-            + ".xlsx";
-
-        zip.file(
-            fileName,
-            wbout
-        );
-    }
-
-    const zipBlob =
-        await zip.generateAsync({
-            type:"blob"
-        });
-
-    const a =
-        document.createElement("a");
-
-    a.href =
-        URL.createObjectURL(
-            zipBlob
-        );
-
-    a.download =
-        "IAPR_Files.zip";
-
-    a.click();
-
-    URL.revokeObjectURL(
-        a.href
+const stuRollCol=
+    headerRow.findIndex(
+        x=>String(x||"").trim()==="StuRollNo"
     );
 
-    alert(
-        experimentColumns.length +
-        " files generated successfully."
+const markCol=
+    headerRow.findIndex(
+        x=>String(x||"").trim()==="Mark"
     );
+
+const markColumnLetter =
+    XLSX.utils.encode_col(markCol);
+
+   if(stuRollCol===-1 || markCol===-1){
+      alert("StuRollNo or Mark column not found");
+      return;
+   }
+
+   for(let r=2;r<rows.length;r++){ // row3 onwards
+      const row=rows[r];
+      const roll=cleanId(row[stuRollCol]);
+
+      if(!roll) break;
+
+      let expMark=0;
+      if(expMap[roll])
+      {
+         expMark=parseFloat(
+            expMap[roll][expCol]
+);
+
+if(isNaN(expMark))
+    expMark=0;
+      }
+
+      let finalMark=expMark;
+
+      if(expIndex < 9){ // experiments 1-9
+         let viva=0;
+         if(vivaMap[roll]){
+            viva=parseFloat(
+    vivaMap[roll][6+expIndex]
+);
+
+if(isNaN(viva))
+    viva=0;
+         }
+         finalMark=(expMark*0.9)+viva;
+      }
+
+      const excelRow = r + 1;
+
+sheet[
+    markColumnLetter + excelRow
+] = {
+    t: "n",
+    v: Math.round(finalMark * 100) / 100
+};
+   }
+
+   const out=XLSX.write(wb,{type:"array",bookType:"xlsx"});
+
+   zip.file(
+     "IAPR_Exp"+String(expIndex+1).padStart(2,"0")+".xlsx",
+     out
+   );
+ }
+
+ const blob=await zip.generateAsync({type:"blob"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="IAPR_Files.zip";
+ a.click();
+
+ alert("Generated "+experimentCols.length+" files.");
 }
-
 </script>
-
 </body>
 </html>
