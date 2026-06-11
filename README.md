@@ -121,3 +121,7 @@ IAPR_Files.zip
 ## Disclaimer
 
 This tool was developed for educational and academic administrative purposes to simplify IAPR mark preparation and upload.
+
+While every effort has been made to ensure the accuracy of the generated outputs, users are responsible for verifying all results before use.
+
+Errors and Omissions Excepted (E&OE).
