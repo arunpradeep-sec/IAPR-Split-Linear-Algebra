@@ -13,7 +13,7 @@ A simple web-based utility to automatically generate experiment-wise IAPR upload
 
 ## Website
 
-https://arunpradeep-sec.github.io/IAPR-Split/
+https://arunpradeep-sec.github.io/IAPR-Split-Linear-Algebra/
 
 ---
 
