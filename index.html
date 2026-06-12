@@ -13,7 +13,7 @@ button{padding:10px 20px;font-size:16px}
 </style>
 </head>
 <body>
-<h2>IAPR File Generator for SH2221-Linear Algebra Lab</h2>
+<h2>IAPR File Generator</h2>
 <p style="
     text-align:left;
     color:#777;
@@ -75,7 +75,7 @@ button{padding:10px 20px;font-size:16px}
         font-style:italic;
     ">
         Note: Ensure the Viva file contains ID Number in Column C and
-        Viva marks for Experiments 1–9 in Columns G to O.Remove the last column of the Excel sheet which contains "Last downloaded from this course" before uploading.
+        Viva marks for Experiments 1–9 in Columns G to P.Remove the last column of the Excel sheet which contains "Last downloaded from this course" before uploading.
     </div>
 </div>
 
@@ -212,20 +212,29 @@ if(isNaN(expMark))
     expMark=0;
       }
 
-      let finalMark=expMark;
+      let finalMark = expMark;
 
-      if(expIndex < 9){ // experiments 1-9
-         let viva=0;
-         if(vivaMap[roll]){
-            viva=parseFloat(
-    vivaMap[roll][6+expIndex]
-);
+// For Experiments 1 to 9:
+// IAPR = 90% Experiment + 10% Viva
+if (expIndex < 11) {
 
-if(isNaN(viva))
-    viva=0;
-         }
-         finalMark=(expMark*0.9)+viva;
-      }
+    let viva = 0;
+
+    if (vivaMap[roll]) {
+        viva = parseFloat(vivaMap[roll][6 + expIndex]);
+
+        if (isNaN(viva))
+            viva = 0;
+    }
+
+    finalMark = (expMark * 0.9) + (viva * 0.1);
+}
+
+// Experiment 10 and beyond:
+// Use experiment mark as-is
+else {
+    finalMark = expMark;
+}
 
       const excelRow = r + 1;
 
